@@ -9,7 +9,7 @@ const Request = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('http://localhost:5000/employee/visit-requests', {
+    fetch('https://vms-moveinsync.onrender.com/employee/visit-requests', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -26,7 +26,7 @@ const Request = () => {
   }, []);
 
   const handleAction = (id, action) => {
-    fetch(`http://localhost:5000/employee/visit-requests/${id}/${action}`, {
+    fetch(`https://vms-moveinsync.onrender.com/employee/visit-requests/${id}/${action}`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,

@@ -35,7 +35,7 @@ const SignUp = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/auth/SignUp', {
+      const res = await fetch('https://vms-moveinsync.onrender.com/auth/SignUp', {
         method: 'POST',
         body: formData,
       });

@@ -35,7 +35,7 @@ const Add = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/admin/add', {
+      const res = await fetch('https://vms-moveinsync.onrender.com/admin/add', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

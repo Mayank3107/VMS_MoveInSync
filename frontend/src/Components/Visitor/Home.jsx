@@ -15,7 +15,7 @@ const Home = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
 
-    fetch('http://localhost:5000/visitor/requests', {
+    fetch('https://vms-moveinsync.onrender.com/visitor/requests', {
       headers: {
         Authorization: `Bearer ${token}`,
       },

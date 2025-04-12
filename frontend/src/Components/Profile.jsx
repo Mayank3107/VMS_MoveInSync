@@ -14,7 +14,7 @@ const Profile = () => {
       return;
     }
 
-    fetch('http://localhost:5000/profile', {
+    fetch('https://vms-moveinsync.onrender.com/profile', {
       headers: {
         Authorization: `Bearer ${token}`,
       },

@@ -30,7 +30,7 @@ const Request = () => {
     const token = localStorage.getItem('token');
 
     try {
-      const res = await fetch('http://localhost:5000/visitor/request', {
+      const res = await fetch('https://vms-moveinsync.onrender.com/visitor/request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

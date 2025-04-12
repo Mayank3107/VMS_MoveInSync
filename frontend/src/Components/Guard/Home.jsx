@@ -10,7 +10,7 @@ const GuardVerify = () => {
 
   const handleVerify = async () => {
     try {
-      const res = await fetch('http://localhost:5000/guard/verify-visit', {
+      const res = await fetch('https://vms-moveinsync.onrender.com/guard/verify-visit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,7 +34,7 @@ const GuardVerify = () => {
 
   const markEntry = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/guard/visit-entry/${visitDetails._id}`, {
+      const res = await fetch(`https://vms-moveinsync.onrender.com/guard/visit-entry/${visitDetails._id}`, {
         method: 'PATCH',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -54,7 +54,7 @@ const GuardVerify = () => {
 
   const markExit = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/guard/visit-exit/${visitDetails._id}`, {
+      const res = await fetch(`https://vms-moveinsync.onrender.com/guard/visit-exit/${visitDetails._id}`, {
         method: 'PATCH',
         headers: {
           Authorization: `Bearer ${token}`,

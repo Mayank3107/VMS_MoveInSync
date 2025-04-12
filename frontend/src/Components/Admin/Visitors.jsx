@@ -7,7 +7,7 @@ const Visitors = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
 
-    fetch('http://localhost:5000/admin/visits', {
+    fetch('https://vms-moveinsync.onrender.com/admin/visits', {
       headers: {
         Authorization: `Bearer ${token}`,
       },

@@ -27,7 +27,7 @@ const EditUser = () => {
     const token = localStorage.getItem('token');
 
     try {
-      const res = await fetch(`http://localhost:5000/admin/edit/${user._id}`, {
+      const res = await fetch(`https://vms-moveinsync.onrender.com/admin/edit/${user._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

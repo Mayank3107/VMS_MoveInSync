@@ -10,7 +10,7 @@ const Edit = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
 
-    fetch('http://localhost:5000/admin/users', {
+    fetch('https://vms-moveinsync.onrender.com/admin/users', {
       headers: {
         Authorization: `Bearer ${token}`,
       },

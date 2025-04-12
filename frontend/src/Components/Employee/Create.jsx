@@ -22,7 +22,7 @@ const Create = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/employee/create-visit', {
+      const res = await fetch('https://vms-moveinsync.onrender.com/employee/create-visit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
