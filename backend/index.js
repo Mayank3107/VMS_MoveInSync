@@ -27,3 +27,5 @@ app.use('/visitor',visitor)
 app.use('/employee',employee)
 app.use('/guard',guard)
 app.use('/profile',profile)
+
+module.exports = app;
