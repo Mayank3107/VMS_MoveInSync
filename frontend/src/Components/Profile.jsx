@@ -84,7 +84,6 @@ const Profile = () => {
         animate="visible"
         whileHover="hover"
       >
-        {/* Profile Image */}
         <div className="flex justify-center mb-8">
           <motion.img
             src={user.Image || 'https://via.placeholder.com/150'}
@@ -96,7 +95,6 @@ const Profile = () => {
           />
         </div>
 
-        {/* Heading */}
         <motion.h2
           className="text-4xl font-extrabold text-center text-gray-800 mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 drop-shadow-md"
           variants={textVariants}
@@ -104,43 +102,53 @@ const Profile = () => {
           {user.Name}'s Profile
         </motion.h2>
 
-        {/* User Details */}
         <div className="space-y-5 text-gray-700 bg-gray-50 rounded-lg p-4">
           <motion.div variants={textVariants} className="flex items-center space-x-3">
-            <span className="font-semibold text-indigo-600 w-24">Name:</span>
+            <span className="font-semibold text-indigo-600 w-28">Name:</span>
             <span className="flex-1">{user.Name || 'N/A'}</span>
           </motion.div>
+
           <motion.div variants={textVariants} className="flex items-center space-x-3">
-            <span className="font-semibold text-indigo-600 w-24">Email:</span>
+            <span className="font-semibold text-indigo-600 w-28">Email:</span>
             <span className="flex-1">{user.Email || 'N/A'}</span>
           </motion.div>
+
           {user.Number && (
             <motion.div variants={textVariants} className="flex items-center space-x-3">
-              <span className="font-semibold text-indigo-600 w-24">Phone:</span>
+              <span className="font-semibold text-indigo-600 w-28">Phone:</span>
               <span className="flex-1">{user.Number}</span>
             </motion.div>
           )}
+
           <motion.div variants={textVariants} className="flex items-center space-x-3">
-            <span className="font-semibold text-indigo-600 w-24">Role:</span>
+            <span className="font-semibold text-indigo-600 w-28">Role:</span>
             <span className="flex-1 capitalize bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-sm">
               {user.role || 'Unknown'}
             </span>
           </motion.div>
+
           {user.role === 'Employee' && user.Department && (
             <motion.div variants={textVariants} className="flex items-center space-x-3">
-              <span className="font-semibold text-indigo-600 w-24">Department:</span>
+              <span className="font-semibold text-indigo-600 w-28">Department:</span>
               <span className="flex-1">{user.Department}</span>
             </motion.div>
           )}
+
           {user.role === 'Guard' && user.Shift && (
             <motion.div variants={textVariants} className="flex items-center space-x-3">
-              <span className="font-semibold text-indigo-600 w-24">Shift:</span>
+              <span className="font-semibold text-indigo-600 w-28">Shift:</span>
               <span className="flex-1">{user.Shift}</span>
+            </motion.div>
+          )}
+
+          {user.role === 'Visitor' && user.Company && (
+            <motion.div variants={textVariants} className="flex items-center space-x-3">
+              <span className="font-semibold text-indigo-600 w-28">Company:</span>
+              <span className="flex-1">{user.Company}</span>
             </motion.div>
           )}
         </div>
 
-        {/* Logout Button */}
         <motion.button
           onClick={handleLogout}
           className="mt-6 w-full bg-gradient-to-r from-red-500 to-red-600 text-white p-3 rounded-lg font-semibold hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"

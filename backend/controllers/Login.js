@@ -48,7 +48,7 @@ exports.Login = async (req, res) => {
     // Find user from the database
     user = await model.findOne({ Email: email });
     if (!user) return res.status(404).json({ message: `${role} not found` });
-
+    
     // Compare password
     let isMatch;
     if (role === 'Admin') {
@@ -56,29 +56,30 @@ exports.Login = async (req, res) => {
     } else {
       isMatch = await bcrypt.compare(password, user.PassWord); // Hashed match
     }
-
+    
     if (!isMatch) return res.status(401).json({ message: 'Incorrect password' });
-
+    
     // Create JWT token
     const token = jwt.sign(
       { id: user._id, role },
       process.env.JWT_SECRET,
       { expiresIn: '2h' }
     );
-
+    
     // Prepare user response
     const userResponse = {
       id: user._id,
       name: user.Name,
       email: user.Email,
     };
-
+    
     // Cache the token and user info
     cache.set(cacheKey, {
       token,
       user: userResponse,
     }, 6); // Cache for 2 hours (same as token expiry)
-
+    
+    // console.log(user,role,password,isMatch);
     // Response
     res.status(200).json({
       message: `${role} login successful`,

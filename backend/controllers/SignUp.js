@@ -95,8 +95,9 @@ exports.GuardSignUp = async (req, res) => {
 };
 
 // Visitor signup handling
+// Visitor signup handling
 exports.VisitorSignUp = async (req, res) => {
-  const { Name, Email, PassWord, Number } = req.body;
+  const { Name, Email, PassWord, Number, Company } = req.body;
 
   try {
     // Check cache for existing user
@@ -109,7 +110,7 @@ exports.VisitorSignUp = async (req, res) => {
     // Check if visitor already exists in DB
     const existing = await Visitor.findOne({ Email });
     if (existing) {
-      // Cache the result for 1 hour (3600 seconds)
+      // Cache the result for 6 seconds
       cache.set(cacheKey, true, 6);
       return res.status(400).json({ message: 'Visitor already exists' });
     }
@@ -117,18 +118,25 @@ exports.VisitorSignUp = async (req, res) => {
     // Hash password
     const hashedPassWord = await bcrypt.hash(PassWord, 10);
     let imageUrl = '';
-    
+
     // Upload image if exists
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, { folder: 'Visitor_images' });
       imageUrl = result.secure_url;
     }
 
-    // Create and save new visitor
-    const visitor = new Visitor({ Name, Email, Number, PassWord: hashedPassWord, Image: imageUrl });
+    // Create and save new visitor with Company field
+    const visitor = new Visitor({
+      Name,
+      Email,
+      Number,
+      Company,
+      PassWord: hashedPassWord,
+      Image: imageUrl,
+    });
+
     await visitor.save();
 
-    // Return success response
     res.status(201).json({ message: 'Visitor registered successfully' });
 
   } catch (err) {

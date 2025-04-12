@@ -8,78 +8,141 @@ const Visitor = require('../models/Visitor');
 const Guard = require('../models/Guard');
 const Admin = require('../models/Admin');
 
-// Route to get user profile
-router.get('/', authenticate, async (req, res) => {
-  try {
-    const userId = req.data.id;
-    const role = req.data.role;
+// Clean response by removing sensitive fields
+const sanitizeUser = (user, role) => {
+  const base = {
+    _id: user._id,
+    Name: user.Name,
+    Email: user.Email,
+    Image: user.Image,
+    role,
+  };
 
+  if (role === 'Visitor') {
+    return {
+      ...base,
+      Number: user.Number || null,
+      Company: user.Company || '',
+    };
+  }
+
+  if (role === 'Employee') {
+    return {
+      ...base,
+      Number: user.Number || null,
+      Department: user.DepartMent || '',
+    };
+  }
+
+  if (role === 'Guard') {
+    return {
+      ...base,
+      Number: user.Number || null,
+      Shift: user.Shift || '',
+    };
+  }
+
+  return base; // For Admin or fallback
+};
+
+// Get profile
+router.get('/', authenticate, async (req, res) => {
+  // console.log(req.body);
+  try {
+    const { id: userId, role } = req.data;
+    
     const cacheKey = `userProfile:${role}:${userId}`;
     const cachedUser = cache.get(cacheKey);
-
+    
     if (cachedUser) {
       console.log('Serving user profile from cache');
       return res.json({ user: cachedUser });
     }
-
+    
     let user;
-    if (role === 'Visitor') {
-      user = await Visitor.findById(userId);
-    } else if (role === 'Employee') {
-      user = await Employee.findById(userId);
-    } else if (role === 'Guard') {
-      user = await Guard.findById(userId);
-    } else if (role === 'Admin') {
-      user = await Admin.findById(userId);
+    switch (role) {
+      case 'Visitor':
+        user = await Visitor.findById(userId);
+        break;
+        case 'Employee':
+          user = await Employee.findById(userId);
+          break;
+          case 'Guard':
+            user = await Guard.findById(userId);
+            break;
+            case 'Admin':
+              user = await Admin.findById(userId);
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid role' });
     }
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Cache the user profile for 2 minutes (120 seconds)
-    cache.set(cacheKey, user, 6);
+    const sanitized = sanitizeUser(user, role);
+    cache.set(cacheKey, sanitized, 120); // cache for 2 minutes
 
-    res.json({ user });
+    res.json({ user: sanitized });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Optional: A route to update the user profile, ensuring the cache is invalidated after the update
+// Update profile
 router.put('/update', authenticate, async (req, res) => {
-  const { name, email, phoneNumber } = req.body;
-  const userId = req.data.id;
-  const role = req.data.role;
-
+  const { name, email, number, company, department } = req.body;
+  const { id: userId, role } = req.data;
+  
   try {
     let user;
-    if (role === 'Visitor') {
-      user = await Visitor.findById(userId);
-    } else if (role === 'Employee') {
-      user = await Employee.findById(userId);
-    } else if (role === 'Guard') {
-      user = await Guard.findById(userId);
-    } else if (role === 'Admin') {
-      user = await Admin.findById(userId);
+    switch (role) {
+      case 'Visitor':
+        user = await Visitor.findById(userId);
+        if (user) {
+          user.Name = name || user.Name;
+          user.Email = email || user.Email;
+          user.Number = number || user.Number;
+          user.Company = company || user.Company;
+        }
+        break;
+        case 'Employee':
+          user = await Employee.findById(userId);
+          if (user) {
+            user.Name = name || user.Name;
+            user.Email = email || user.Email;
+            user.Number = number || user.Number;
+            user.DepartMent = department || user.DepartMent;
+        }
+        break;
+        case 'Guard':
+          user = await Guard.findById(userId);
+          if (user) {
+            user.Name = name || user.Name;
+            user.Email = email || user.Email;
+            user.Number = number || user.Number;
+          }
+          break;
+          case 'Admin':
+            user = await Admin.findById(userId);
+            if (user) {
+              user.Name = name || user.Name;
+              user.Email = email || user.Email;
+            }
+            break;
+            default:
+              return res.status(400).json({ message: 'Invalid role' });
     }
-
     if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Update the user profile fields
-    user.Name = name || user.Name;
-    user.Email = email || user.Email;
-    user.PhoneNumber = phoneNumber || user.PhoneNumber;
 
     await user.save();
 
-    // Invalidate the cached profile after update
-    const cacheKey = `userProfile:${role}:${userId}`;
-    cache.del(cacheKey);
-
+    cache.del(`userProfile:${role}:${userId}`);
+    
     res.status(200).json({ message: 'User profile updated successfully' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 

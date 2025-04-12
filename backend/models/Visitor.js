@@ -1,27 +1,31 @@
-const mongoose=require('mongoose')
+const mongoose = require('mongoose');
 
-const VisitorSchema=new mongoose.Schema({
-    Name:{
-        type:String,
-        require:true
-    },
-    Email:{
-        type:String,
-        require:true
-    },
-    PassWord:{
-        type:String,
-        require:true
-    },
-    Number:{
-        type:String,
-        require:true
-    },
-    Image:{
-        type:String,
-        require:true
-    }
-})
+const VisitorSchema = new mongoose.Schema({
+  Name: {
+    type: String,
+    required: true
+  },
+  Email: {
+    type: String,
+    required: true
+  },
+  PassWord: {
+    type: String,
+    required: true
+  },
+  Number: {
+    type: String,
+    required: true
+  },
+  Image: {
+    type: String,
+    required: true
+  },
+  Company: {
+    type: String,
+    required: false  // optional; change to `true` if you want it required
+  }
+});
 
-const Visitor=mongoose.models.Visitor || mongoose.model('Visitor',VisitorSchema);
-module.exports=Visitor
+const Visitor = mongoose.models.Visitor || mongoose.model('Visitor', VisitorSchema);
+module.exports = Visitor;
