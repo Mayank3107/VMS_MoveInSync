@@ -6,6 +6,7 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 const Employee = require('../models/Employee');
 const Guard = require('../models/Guard');
+const Visit=require('../models/Visit')
 const cache = require('../utils/cache');
 
 // Route to add a user

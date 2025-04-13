@@ -21,6 +21,7 @@ const Profile = () => {
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log(data.user)
         setUser(data.user || null);
         setLoading(false);
       })
@@ -32,7 +33,7 @@ const Profile = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    navigate('/login');
+    navigate('/Login');
   };
 
   const cardVariants = {
@@ -131,13 +132,6 @@ const Profile = () => {
             <motion.div variants={textVariants} className="flex items-center space-x-3">
               <span className="font-semibold text-indigo-600 w-28">Department:</span>
               <span className="flex-1">{user.Department}</span>
-            </motion.div>
-          )}
-
-          {user.role === 'Guard' && user.Shift && (
-            <motion.div variants={textVariants} className="flex items-center space-x-3">
-              <span className="font-semibold text-indigo-600 w-28">Shift:</span>
-              <span className="flex-1">{user.Shift}</span>
             </motion.div>
           )}
 

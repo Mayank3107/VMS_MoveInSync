@@ -1,49 +1,36 @@
 const Visit = require('../models/Visit');
 const cache = require('../utils/cache');
+const cloudinary = require('../utils/cloudinary');
 
-// Guard verify the visit details
+// Verify visit by QR
 exports.verifyVisit = async (req, res) => {
   try {
     const { qrData } = req.body;
-    if (!qrData) {
-      return res.status(400).json({ message: 'QR data is required' });
-    }
+    if (!qrData) return res.status(400).json({ message: 'QR data is required' });
 
     let parsedData;
     try {
       parsedData = JSON.parse(qrData);
-    } catch (err) {
+    } catch {
       return res.status(400).json({ message: 'Invalid QR data format' });
     }
 
     const visitorId = parsedData.visitorId;
-    if (!visitorId) {
-      return res.status(400).json({ message: 'visitorId not found in QR data' });
-    }
+    if (!visitorId) return res.status(400).json({ message: 'visitorId not found in QR data' });
 
-    // Check cache first
     const cacheKey = `visitVerification:${visitorId}`;
     const cachedVisit = cache.get(cacheKey);
-    if (cachedVisit) {
-      return res.status(200).json({ message: 'Visit verified successfully', visit: cachedVisit });
-    }
+    if (cachedVisit) return res.status(200).json({ message: 'Visit verified successfully', visit: cachedVisit });
 
     const visit = await Visit.findOne({ visitorId });
-    if (!visit) {
-      return res.status(404).json({ message: 'Visit not found' });
-    }
+    if (!visit) return res.status(404).json({ message: 'Visit not found' });
 
-    // Time handling
     const nowUTC = new Date();
     const visitStartUTC = visit.visitTime;
-    const visitEndUTC = new Date(visitStartUTC.getTime() + visit.duration * 60 * 1000);
+    const visitEndUTC = new Date(visitStartUTC.getTime() + visit.duration * 60000);
 
-    const istOffset = 0; // Adjust according to your time zone if needed
-    const visitStartIST = new Date(visitStartUTC.getTime() + istOffset);
-    const visitEndIST = new Date(visitEndUTC.getTime() + istOffset);
-
-    const graceBefore = 5 * 60 * 1000; // 5 minutes before the visit
-    const graceAfter = 10 * 60 * 1000; // 10 minutes after the visit
+    const graceBefore = 5 * 60 * 1000;
+    const graceAfter = 10 * 60 * 1000;
 
     const isValidTime =
       nowUTC.getTime() >= visitStartUTC.getTime() - graceBefore &&
@@ -52,113 +39,54 @@ exports.verifyVisit = async (req, res) => {
     const isApproved = visit.status === 'Approved';
 
     if (visit.status === 'Expired') {
-      return res.status(404).json({
-        message: 'Visit is already expired',
-        visit: {
-          _id: visit._id,
-          visitorName: visit.visitorName,
-          visitorEmail: visit.visitorEmail,
-          employeeEmail: visit.employeeEmail,
-          Image: visit.Image,
-          status: visit.status,
-          visitTime: visitStartIST,
-          duration: visit.duration,
-          reason: visit.reason,
-          hasEntered: visit.hasEntered,
-          hasExited: visit.hasExited,
-          entryTime: visit.entryTime,
-          exitTime: visit.exitTime
-        }
-      });
+      return res.status(404).json({ message: 'Visit is already expired', visit });
     }
 
     if (!isApproved) {
-      return res.status(403).json({
-        message: 'Visit is not approved yet',
-        visit: {
-          _id: visit._id,
-          visitorName: visit.visitorName,
-          visitorEmail: visit.visitorEmail,
-          employeeEmail: visit.employeeEmail,
-          Image: visit.Image,
-          status: visit.status,
-          visitTime: visitStartIST,
-          duration: visit.duration,
-          reason: visit.reason,
-        }
-      });
+      return res.status(403).json({ message: 'Visit is not approved yet', visit });
     }
 
-    // If the visit time has passed and it's expired, change status to Expired
-    if (!isValidTime || nowUTC.getTime() > visitEndUTC.getTime()) {
+    if (!isValidTime || nowUTC > visitEndUTC) {
       visit.status = 'Expired';
       await visit.save();
     }
 
-    // Cache the visit verification response
-    cache.set(cacheKey, {
-      _id: visit._id,
-      visitorName: visit.visitorName,
-      visitorEmail: visit.visitorEmail,
-      employeeEmail: visit.employeeEmail,
-      Image: visit.Image,
-      status: visit.status,
-      visitTime: visitStartIST,
-      duration: visit.duration,
-      reason: visit.reason,
-      hasEntered: visit.hasEntered,
-      hasExited: visit.hasExited,
-      entryTime: visit.entryTime,
-      exitTime: visit.exitTime
-    });
+    cache.set(cacheKey, visit);
 
-    // Valid Visit
-    return res.status(200).json({
-      message: 'Visit verified successfully',
-      visit: {
-        _id: visit._id,
-        visitorName: visit.visitorName,
-        visitorEmail: visit.visitorEmail,
-        employeeEmail: visit.employeeEmail,
-        Image: visit.Image,
-        status: visit.status,
-        visitTime: visitStartIST,
-        duration: visit.duration,
-        reason: visit.reason,
-        hasEntered: visit.hasEntered,
-        hasExited: visit.hasExited,
-        entryTime: visit.entryTime,
-        exitTime: visit.exitTime
-      },
-    });
+    return res.status(200).json({ message: 'Visit verified successfully', visit });
   } catch (err) {
     console.error('Error verifying visit:', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-// Handling visitor entry
+// Mark Entry with Photo
 exports.markEntry = async (req, res) => {
   try {
     const visit = await Visit.findById(req.params.id);
     if (!visit) return res.status(404).json({ message: 'Visit not found' });
-
     if (visit.hasEntered) return res.status(400).json({ message: 'Visitor already entered' });
+
+    const { photo } = req.body;
+    if (!photo) return res.status(400).json({ message: 'Photo is required for entry' });
+
+    const uploaded = await cloudinary.uploader.upload(photo, { folder: 'VisitEntryPhotos' });
 
     visit.hasEntered = true;
     visit.entryTime = new Date();
-    await visit.save();
+    visit.Image = uploaded.secure_url;
 
-    // Clear cache since visit status has changed
+    await visit.save();
     cache.del(`visitVerification:${visit.visitorId}`);
 
-    res.json({ message: 'Entry marked', visit });
+    return res.json({ message: 'Entry marked', visit });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error('Error marking entry:', err);
+    return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-// Handling visitor outing
+// Mark Exit
 exports.markExit = async (req, res) => {
   try {
     const visit = await Visit.findById(req.params.id);
@@ -170,13 +98,13 @@ exports.markExit = async (req, res) => {
     visit.hasExited = true;
     visit.exitTime = new Date();
     visit.status = 'Expired';
-    await visit.save();
 
-    // Clear cache since visit status has changed
+    await visit.save();
     cache.del(`visitVerification:${visit.visitorId}`);
 
-    res.json({ message: 'Exit marked', visit });
+    return res.json({ message: 'Exit marked', visit });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error('Error marking exit:', err);
+    return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };

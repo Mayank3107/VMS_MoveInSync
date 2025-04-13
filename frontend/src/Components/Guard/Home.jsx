@@ -1,12 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Profile from '../Profile';
 
 const GuardVerify = () => {
   const [qrData, setQrData] = useState('');
   const [visitDetails, setVisitDetails] = useState(null);
   const [status, setStatus] = useState('');
-
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    // Start video stream when component loads
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+        })
+        .catch(err => {
+          console.error("Error accessing camera:", err);
+        });
+    }
+  }, []);
 
   const handleVerify = async () => {
     try {
@@ -20,38 +35,38 @@ const GuardVerify = () => {
       });
 
       const data = await res.json();
-      // console.log(data);
       setVisitDetails(data.visit);
-      if (!res.ok) {
-        setStatus(data.message || 'Invalid Visit');
-      } else {
-        setStatus('VALID VISIT');
-      }
+      setStatus(res.ok ? 'VALID VISIT' : data.message || 'Invalid Visit');
     } catch (error) {
       setStatus('Error verifying visit');
     }
   };
 
+  const capturePhoto = () => {
+    const context = canvasRef.current.getContext('2d');
+    context.drawImage(videoRef.current, 0, 0, 320, 240);
+    return canvasRef.current.toDataURL('image/jpeg');
+  };
+
   const markEntry = async () => {
+    const imageBase64 = capturePhoto();
     try {
       const res = await fetch(`https://vms-moveinsync.onrender.com/guard/visit-entry/${visitDetails._id}`, {
         method: 'PATCH',
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({ photo: imageBase64 }),
       });
       const data = await res.json();
-      if (res.ok) {
-        setVisitDetails(data.visit);
-        setStatus('Entry marked successfully');
-      } else {
-        setStatus(data.message || 'Error marking entry');
-      }
+      setVisitDetails(data.visit);
+      setStatus(res.ok ? 'Entry marked successfully' : data.message || 'Error marking entry');
     } catch (err) {
       setStatus('Error marking entry');
     }
   };
-
+  
   const markExit = async () => {
     try {
       const res = await fetch(`https://vms-moveinsync.onrender.com/guard/visit-exit/${visitDetails._id}`, {
@@ -61,12 +76,8 @@ const GuardVerify = () => {
         },
       });
       const data = await res.json();
-      if (res.ok) {
-        setVisitDetails(data.visit);
-        setStatus('Exit marked successfully');
-      } else {
-        setStatus(data.message || 'Error marking exit');
-      }
+      setVisitDetails(data.visit);
+      setStatus(res.ok ? 'Exit marked successfully' : data.message || 'Error marking exit');
     } catch (err) {
       setStatus('Error marking exit');
     }
@@ -74,23 +85,19 @@ const GuardVerify = () => {
 
   const isWithinVisitTime = () => {
     if (!visitDetails?.visitTime || !visitDetails?.duration) return false;
-
     const now = new Date();
     const start = new Date(visitDetails.visitTime);
     const end = new Date(start.getTime() + visitDetails.duration * 60000);
-
     return now >= start && now <= end;
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6">
       <div className="max-w-2xl mx-auto">
-        <div className="mb-12">
-          <Profile />
-        </div>
+        <div className="mb-12"><Profile /></div>
 
-        <div className="bg-white rounded-xl shadow-2xl p-8 transform transition-all duration-300 hover:scale-105">
-          <h2 className="text-3xl font-extrabold text-center text-gray-800 mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 drop-shadow-md">
+        <div className="bg-white rounded-xl shadow-2xl p-8">
+          <h2 className="text-3xl font-extrabold text-center text-gray-800 mb-6">
             Guard Visit Verification
           </h2>
 
@@ -99,81 +106,63 @@ const GuardVerify = () => {
             value={qrData}
             onChange={(e) => setQrData(e.target.value)}
             placeholder="Paste scanned QR data here"
-            className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 placeholder-gray-400 resize-none bg-gray-50"
+            className="w-full p-4 border rounded-lg bg-gray-50"
           />
-
-          <button
-            onClick={handleVerify}
-            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold shadow-md hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 hover:shadow-lg hover:scale-105 mt-4"
-          >
+          <button onClick={handleVerify} className="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg">
             Verify Visit
           </button>
 
           {status && (
-            <p
-              className={`mt-6 text-center font-semibold py-2 rounded-md ${
-                status.includes('VALID') || status.includes('successfully')
-                  ? 'text-green-700 bg-green-100'
-                  : 'text-red-700 bg-red-100'
-              } animate-pulse`}
-            >
+            <p className={`mt-6 text-center font-semibold py-2 rounded-md ${status.includes('VALID') ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'}`}>
               {status}
             </p>
           )}
 
+          {/* Camera Preview and Canvas */}
+          <div className="flex justify-center mt-6 gap-6">
+            <video ref={videoRef} width="320" height="240" className="rounded-lg border shadow" />
+            <canvas ref={canvasRef} width="320" height="240" className="hidden" />
+          </div>
+
           {visitDetails && (
-            <div className="mt-8 bg-gray-50 border border-gray-200 p-6 rounded-lg shadow-md">
-              <div className="flex justify-center mb-6">
-                <img
-                  src={visitDetails.Image || 'https://via.placeholder.com/150'}
-                  alt="Visitor"
-                  className="w-32 h-32 rounded-full border-4 border-indigo-300 object-cover shadow-lg hover:scale-110 transition-transform duration-300"
-                />
-              </div>
+            <div className="mt-6 space-y-4 text-gray-700">
+              {/* Visit Details */}
+              <p><strong>Visitor:</strong> {visitDetails.visitorName}</p>
+              <p><strong>Email:</strong> {visitDetails.visitorEmail}</p>
+              <p><strong>Status:</strong> {visitDetails.status}</p>
+              <p><strong>Company:</strong> {visitDetails.Company || 'N/A'}</p>
 
-              <div className="space-y-4 text-gray-700">
-                <p><span className="font-semibold text-indigo-600 w-32 inline-block">Visitor Name:</span>{visitDetails.visitorName}</p>
-                <p><span className="font-semibold text-indigo-600 w-32 inline-block">Visitor Email:</span>{visitDetails.visitorEmail}</p>
-                <p><span className="font-semibold text-indigo-600 w-32 inline-block">Employee:</span>{visitDetails.employeeEmail}</p>
-                <p><span className="font-semibold text-indigo-600 w-32 inline-block">Status:</span>
-                  <span className={`font-semibold px-2 py-1 rounded-full text-sm ${
-                    visitDetails.status === 'Approved' ? 'text-green-700 bg-green-100' : 'text-yellow-700 bg-yellow-100'
-                  }`}>{visitDetails.status}</span>
-                </p>
-                <p><span className="font-semibold text-indigo-600 w-32 inline-block">Reason:</span>{visitDetails.reason}</p>
-                <p><span className="font-semibold text-indigo-600 w-32 inline-block">Entry Time:</span>
-                  {visitDetails.entryTime ? new Date(visitDetails.entryTime).toLocaleString() : 'Not marked'}
-                </p>
-                <p><span className="font-semibold text-indigo-600 w-32 inline-block">Exit Time:</span>
-                  {visitDetails.exitTime ? new Date(visitDetails.exitTime).toLocaleString() : 'Not marked'}
-                </p>
-                <p><span className="font-semibold text-indigo-600 w-32 inline-block">Time Validity:</span>
-                  {(() => {
-                    const start = new Date(visitDetails.visitTime);
-                    const end = new Date(start.getTime() + visitDetails.duration * 60000);
-                    return `${start.toLocaleString()} → ${end.toLocaleString()}`;
-                  })()}
-                </p>
-              </div>
+              <div className="mt-4 flex flex-col items-center gap-4">
+  {visitDetails.status === 'Pending' && (
+    <p className="text-sm text-yellow-700">Visit is not approved yet.</p>
+  )}
+  {visitDetails.status === 'Expired' && (
+    <p className="text-sm text-yellow-700">Visit is already Expired.</p>
+  )}
+  {!isWithinVisitTime() &&visitDetails.status==='Approved' && (
+    <p className="text-sm text-red-700">Visit is not within allowed time.</p>
+  )}
+  {visitDetails.hasEntered && (
+    <p className="text-sm text-blue-700">Visitor has already entered.</p>
+  )}
+  {visitDetails.status === 'Approved' && isWithinVisitTime() && !visitDetails.hasEntered && (
+    <button
+      onClick={markEntry}
+      className="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700"
+    >
+      Mark Entry
+    </button>
+  )}
+  {visitDetails.status === 'Approved' && isWithinVisitTime() && visitDetails.hasEntered && !visitDetails.hasExited && (
+    <button
+      onClick={markExit}
+      className="bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700"
+    >
+      Mark Exit
+    </button>
+  )}
+</div>
 
-              <div className="mt-6 flex gap-4 justify-center">
-                {visitDetails.status === 'Approved' && isWithinVisitTime() && !visitDetails.hasEntered && (
-                  <button
-                    onClick={markEntry}
-                    className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-lg font-semibold shadow-md hover:from-green-600 hover:to-green-700 transition-all duration-300 hover:shadow-lg hover:scale-105"
-                  >
-                    Mark Entry
-                  </button>
-                )}
-                {visitDetails.status === 'Approved' && isWithinVisitTime() && visitDetails.hasEntered && !visitDetails.hasExited && (
-                  <button
-                    onClick={markExit}
-                    className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-2 rounded-lg font-semibold shadow-md hover:from-red-600 hover:to-red-700 transition-all duration-300 hover:shadow-lg hover:scale-105"
-                  >
-                    Mark Exit
-                  </button>
-                )}
-              </div>
             </div>
           )}
         </div>

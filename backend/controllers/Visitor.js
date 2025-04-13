@@ -58,6 +58,7 @@ exports.sendRequest = async (req, res) => {
       employeeEmail,
       Image: visitor.Image,
       visitTime: parsedVisitTimeUTC,
+      Company:visitor.Company,
       duration,
       reason,
       status: 'Pending',

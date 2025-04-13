@@ -14,6 +14,7 @@ import VisitorRequest from './Components/Visitor/Request';
 import Guard from './Components/Guard/Home';
 import EmployeeVisit from './Components/Employee/Create'
 import EmployeeRequest from './Components/Employee/Request'
+import Error from './Components/Error'
 
 function App() {
 
@@ -22,6 +23,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Main/>} />
+        <Route path="*" element={<Error/>}/>
         <Route path="/Login" element={<Login />} />
         <Route path="/SignUp" element={<SignUp />} />
 

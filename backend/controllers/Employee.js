@@ -19,7 +19,6 @@ exports.getVisitRequests = async (req, res) => {
     // Making new response and set cache with 6-second expiration
     const requests = await Visit.find({ employeeEmail: req.user.Email });
     cache.set(key, requests, 6); // Cache for 6 seconds
-
     res.status(200).json({ requests, source: 'db' });
   } catch (err) {
     // Error handling
@@ -169,6 +168,7 @@ exports.createVisit = async (req, res) => {
       visitTime: new Date(visitTime),
       duration,
       status: 'Approved',
+      Image:visitor.Image
     });
 
     // Update employee visit count

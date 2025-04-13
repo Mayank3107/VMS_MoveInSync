@@ -8,6 +8,7 @@ const fs = require('fs');
 
 // Controller to add new employee or guard
 exports.Add = async (req, res) => {
+  console.log(req.body);
   const { name, email, password, phoneNumber, department, role } = req.body;
 
   try {
@@ -100,6 +101,7 @@ exports.users = async (req, res) => {
       PhoneNumber: user.Number,
       Department: user.Department
     }));
+    console.log(users);
 
     // Set cache and return response with 6-second expiration time
     cache.set(cacheKey, users, 6); // Cache for 6 seconds

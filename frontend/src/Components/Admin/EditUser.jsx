@@ -5,11 +5,12 @@ const EditUser = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = location.state || {};
-
+  if(user.Department)user.role='Employee'
+console.log(user)
   const [formData, setFormData] = useState({
     name: user?.Name || '',
     email: user?.Email || '',
-    phoneNumber: user?.PhoneNumber || '',
+    phoneNumber: user?.Number || '',
     department: user?.Department || '',
     role: user?.role || '',
   });
@@ -55,9 +56,9 @@ const EditUser = () => {
         </p>
       </div>
     );
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6">
+    
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6">
       <div className="max-w-md w-full bg-white rounded-xl shadow-2xl p-8 transform transition-all duration-300 hover:scale-105">
         {/* Heading */}
         <h2 className="text-3xl font-extrabold text-center text-gray-800 mb-8 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 drop-shadow-md">

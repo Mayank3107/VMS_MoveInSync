@@ -7,29 +7,18 @@ const VisitSchema = new mongoose.Schema({
   employeeEmail: String,
   visitTime: Date,
   duration: Number,
+  Company:String,
   reason: String,
   status: {
     type: String,
-    enum: ['Pending', 'Approved', 'Rejected','Expired'],
+    enum: ['Pending', 'Approved', 'Rejected', 'Expired'],
     default: 'Pending',
   },
-
-  // ✅ New Fields for Guard Entry/Exit Management:
-  hasEntered: {
-    type: Boolean,
-    default: false,
-  },
-  Image:{
-    type:String,
-    require:true
-  },
-  hasExited: {
-    type: Boolean,
-    default: false,
-  },
+  hasEntered: { type: Boolean, default: false },
+  hasExited: { type: Boolean, default: false },
+  Image: { type: String, required: true },
   entryTime: Date,
-  exitTime: Date,
-
+  exitTime: Date
 }, { timestamps: true });
 
 const Visit = mongoose.models.Visit || mongoose.model('Visit', VisitSchema);

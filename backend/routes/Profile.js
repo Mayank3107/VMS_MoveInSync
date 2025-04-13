@@ -30,7 +30,7 @@ const sanitizeUser = (user, role) => {
     return {
       ...base,
       Number: user.Number || null,
-      Department: user.DepartMent || '',
+      Department: user.Department || '',
     };
   }
 
@@ -38,7 +38,6 @@ const sanitizeUser = (user, role) => {
     return {
       ...base,
       Number: user.Number || null,
-      Shift: user.Shift || '',
     };
   }
 
@@ -80,7 +79,7 @@ router.get('/', authenticate, async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     const sanitized = sanitizeUser(user, role);
-    cache.set(cacheKey, sanitized, 120); // cache for 2 minutes
+    cache.set(cacheKey, sanitized, 12); // cache for 2 minutes
 
     res.json({ user: sanitized });
   } catch (err) {
@@ -112,7 +111,7 @@ router.put('/update', authenticate, async (req, res) => {
             user.Name = name || user.Name;
             user.Email = email || user.Email;
             user.Number = number || user.Number;
-            user.DepartMent = department || user.DepartMent;
+            user.DepartMent = department || user.Department;
         }
         break;
         case 'Guard':

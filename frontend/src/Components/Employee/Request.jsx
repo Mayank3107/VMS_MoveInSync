@@ -105,6 +105,10 @@ const Request = () => {
                       <span>{req.visitorEmail || 'N/A'}</span>
                     </p>
                     <p className="flex items-center space-x-2">
+                      <span className="font-semibold text-indigo-600 w-28">Company:</span>
+                      <span>{req.Company || 'N/A'}</span>
+                    </p>
+                    <p className="flex items-center space-x-2">
                       <span className="font-semibold text-indigo-600 w-28">Status:</span>
                       <span
                         className={`font-semibold px-2 py-1 rounded-full text-sm ${
